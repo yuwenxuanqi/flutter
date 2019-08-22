@@ -4,7 +4,6 @@
 
 import 'dart:async';
 import 'dart:developer';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
@@ -57,17 +56,15 @@ abstract class ShaderWarmUp {
 
   /// The size of the warm up image.
   ///
-  /// The exact size shouldn't matter much as long as it's not too far away from
-  /// the target device's screen. 1024x1024 is a good choice as it is within an
-  /// order of magnitude of most devices.
+  /// The exact size shouldn't matter much as long as all draws are onscreen.
+  /// 100x100 is an arbitrary small size that's easy to fit significant draw
+  /// calls onto.
   ///
   /// A custom shader warm up can override this based on targeted devices.
-  ui.Size get size => const ui.Size(1024.0, 1024.0);
+  ui.Size get size => const ui.Size(100.0, 100.0);
 
   /// Trigger draw operations on a given canvas to warm up GPU shader
   /// compilation cache.
-  ///
-  /// Parameter [image] is to be used for drawImage related operations.
   ///
   /// To decide which draw operations to be added to your custom warm up
   /// process, try capture an skp using `flutter screenshot --observatory-
@@ -90,9 +87,8 @@ abstract class ShaderWarmUp {
     final ui.Picture picture = recorder.endRecording();
     final TimelineTask shaderWarmUpTask = TimelineTask();
     shaderWarmUpTask.start('Warm-up shader');
-    picture.toImage(size.width.ceil(), size.height.ceil()).then((ui.Image _) {
-      shaderWarmUpTask.finish();
-    });
+    await picture.toImage(size.width.ceil(), size.height.ceil());
+    shaderWarmUpTask.finish();
   }
 }
 
@@ -103,13 +99,26 @@ abstract class ShaderWarmUp {
 /// issues seen so far.
 class DefaultShaderWarmUp extends ShaderWarmUp {
   /// Allow [DefaultShaderWarmUp] to be used as the default value of parameters.
-  const DefaultShaderWarmUp();
+  const DefaultShaderWarmUp(
+      {this.drawCallSpacing = 0.0,
+      this.canvasSize = const ui.Size(100.0, 100.0)});
+
+  /// Constant that can be used to space out draw calls for visualizing the draws
+  /// for debugging purposes (example: 80.0).  Be sure to also change your canvas
+  /// size.
+  final double drawCallSpacing;
+
+  /// Value that returned by this.size to control canvas size where draws happen.
+  final ui.Size canvasSize;
+
+  @override
+  ui.Size get size => canvasSize;
 
   /// Trigger common draw operations on a canvas to warm up GPU shader
   /// compilation cache.
   @override
-  Future<void> warmUpOnCanvas(ui.Canvas canvas) {
-    final ui.RRect rrect = ui.RRect.fromLTRBXY(20.0, 20.0, 60.0, 60.0, 10.0, 10.0);
+  Future<void> warmUpOnCanvas(ui.Canvas canvas) async {
+    const ui.RRect rrect = ui.RRect.fromLTRBXY(20.0, 20.0, 60.0, 60.0, 10.0, 10.0);
     final ui.Path rrectPath = ui.Path()..addRRect(rrect);
 
     final ui.Path circlePath = ui.Path()..addOval(
@@ -161,22 +170,22 @@ class DefaultShaderWarmUp extends ShaderWarmUp {
       canvas.save();
       for (ui.Paint paint in paints) {
         canvas.drawPath(paths[i], paint);
-        canvas.translate(80.0, 0.0);
+        canvas.translate(drawCallSpacing, 0.0);
       }
       canvas.restore();
-      canvas.translate(0.0, 80.0);
+      canvas.translate(0.0, drawCallSpacing);
     }
 
     // Warm up shadow shaders.
     const ui.Color black = ui.Color(0xFF000000);
     canvas.save();
     canvas.drawShadow(rrectPath, black, 10.0, true);
-    canvas.translate(80.0, 0.0);
+    canvas.translate(drawCallSpacing, 0.0);
     canvas.drawShadow(rrectPath, black, 10.0, false);
     canvas.restore();
 
     // Warm up text shaders.
-    canvas.translate(0.0, 80.0);
+    canvas.translate(0.0, drawCallSpacing);
     final ui.ParagraphBuilder paragraphBuilder = ui.ParagraphBuilder(
       ui.ParagraphStyle(textDirection: ui.TextDirection.ltr),
     )..pushStyle(ui.TextStyle(color: black))..addText('_');
@@ -184,30 +193,21 @@ class DefaultShaderWarmUp extends ShaderWarmUp {
       ..layout(const ui.ParagraphConstraints(width: 60.0));
     canvas.drawParagraph(paragraph, const ui.Offset(20.0, 20.0));
 
-
-    // Construct an image for drawImage related operations
-    const int imageWidth = 40;
-    const int imageHeight = 40;
-    final Uint8List pixels = Uint8List.fromList(List<int>.generate(
-      imageWidth * imageHeight * 4,
-          (int i) => i % 4 < 2 ? 0x00 : 0xFF,  // opaque blue
-    ));
-
-    final Completer<void> completer = Completer<void>();
-    ui.decodeImageFromPixels(pixels, imageWidth, imageHeight, ui.PixelFormat.rgba8888, (ui.Image image) {
-      // Warm up image shaders
-      canvas.translate(0.0, 80.0);
-      canvas.save();
-      final ui.Rect srcRect = ui.Rect.fromLTWH(0.0, 0.0, image.width.toDouble(), image.height.toDouble());
-      canvas.drawImage(image, const ui.Offset(20.0, 20.0), ui.Paint());
-      canvas.translate(80.0, 0.0);
-      canvas.drawImageRect(image, srcRect, ui.Rect.fromLTWH(20.0, 20.0, 20.0, 20.0), paints[0]);
-      canvas.translate(80.0, 0.0);
-      canvas.drawImageRect(image, srcRect, ui.Rect.fromLTWH(10.0, 10.0, 60.0, 60.0), paints[0]);
-      canvas.restore();
-      completer.complete();
-    });
-
-    return completer.future;
+    // Draw a rect inside a rrect with a non-trivial intersection. If the
+    // intersection is trivial (e.g., equals the rrect clip), Skia will optimize
+    // the clip out.
+    //
+    // Add an integral or fractional translation to trigger Skia's non-AA or AA
+    // optimizations (as did before in normal FillRectOp in rrect clip cases).
+    for (double fraction in <double>[0.0, 0.5]) {
+      canvas
+        ..save()
+        ..translate(fraction, fraction)
+        ..clipRRect(ui.RRect.fromLTRBR(8, 8, 328, 248, const ui.Radius.circular(16)))
+        ..drawRect(const ui.Rect.fromLTRB(10, 10, 320, 240), ui.Paint())
+        ..restore();
+      canvas.translate(drawCallSpacing, 0.0);
+    }
+    canvas.translate(0.0, drawCallSpacing);
   }
 }

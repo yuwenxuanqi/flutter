@@ -9,8 +9,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('provides a value to the layer tree',
-      (WidgetTester tester) async {
+  testWidgets('provides a value to the layer tree', (WidgetTester tester) async {
     await tester.pumpWidget(
       const AnnotatedRegion<int>(
         child: SizedBox(width: 100.0, height: 100.0),
@@ -22,8 +21,7 @@ void main() {
         layers.firstWhere((Layer layer) => layer is AnnotatedRegionLayer<int>);
     expect(layer.value, 1);
   });
-  testWidgets('provides a value to the layer tree in a particular region',
-      (WidgetTester tester) async {
+  testWidgets('provides a value to the layer tree in a particular region', (WidgetTester tester) async {
     await tester.pumpWidget(
       Transform.translate(
         offset: const Offset(25.0, 25.0),
@@ -33,12 +31,12 @@ void main() {
         ),
       ),
     );
-    int result = RendererBinding.instance.renderView.layer.find<int>(Offset(
+    int result = RendererBinding.instance.renderView.debugLayer.find<int>(Offset(
       10.0 * window.devicePixelRatio,
       10.0 * window.devicePixelRatio,
     ));
     expect(result, null);
-    result = RendererBinding.instance.renderView.layer.find<int>(Offset(
+    result = RendererBinding.instance.renderView.debugLayer.find<int>(Offset(
       50.0 * window.devicePixelRatio,
       50.0 * window.devicePixelRatio,
     ));

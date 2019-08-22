@@ -30,15 +30,15 @@ class OverscrollDemoState extends State<OverscrollDemo> {
     final Completer<void> completer = Completer<void>();
     Timer(const Duration(seconds: 3), () { completer.complete(); });
     return completer.future.then<void>((_) {
-       _scaffoldKey.currentState?.showSnackBar(SnackBar(
-         content: const Text('Refresh complete'),
-         action: SnackBarAction(
-           label: 'RETRY',
-           onPressed: () {
-             _refreshIndicatorKey.currentState.show();
-           },
-         ),
-       ));
+      _scaffoldKey.currentState?.showSnackBar(SnackBar(
+        content: const Text('Refresh complete'),
+        action: SnackBarAction(
+          label: 'RETRY',
+          onPressed: () {
+            _refreshIndicatorKey.currentState.show();
+          },
+        ),
+      ));
     });
   }
 
@@ -62,18 +62,20 @@ class OverscrollDemoState extends State<OverscrollDemo> {
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
         onRefresh: _handleRefresh,
-        child: ListView.builder(
-          padding: kMaterialListPadding,
-          itemCount: _items.length,
-          itemBuilder: (BuildContext context, int index) {
-            final String item = _items[index];
-            return ListTile(
-              isThreeLine: true,
-              leading: CircleAvatar(child: Text(item)),
-              title: Text('This item represents $item.'),
-              subtitle: const Text('Even more additional list item information appears on line three.'),
-            );
-          },
+        child: Scrollbar(
+          child: ListView.builder(
+            padding: kMaterialListPadding,
+            itemCount: _items.length,
+            itemBuilder: (BuildContext context, int index) {
+              final String item = _items[index];
+              return ListTile(
+                isThreeLine: true,
+                leading: CircleAvatar(child: Text(item)),
+                title: Text('This item represents $item.'),
+                subtitle: const Text('Even more additional list item information appears on line three.'),
+              );
+            },
+          ),
         ),
       ),
     );

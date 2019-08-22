@@ -61,7 +61,7 @@ class TestSemantics {
        assert(decreasedValue != null),
        assert(hint != null),
        assert(children != null),
-       tags = tags?.toSet() ?? Set<SemanticsTag>();
+       tags = tags?.toSet() ?? <SemanticsTag>{};
 
   /// Creates an object with some test semantics data, with the [id] and [rect]
   /// set to the appropriate values for the root node.
@@ -92,7 +92,7 @@ class TestSemantics {
        elevation = 0.0,
        thickness = 0.0,
        assert(children != null),
-       tags = tags?.toSet() ?? Set<SemanticsTag>();
+       tags = tags?.toSet() ?? <SemanticsTag>{};
 
   /// Creates an object with some test semantics data, with the [id] and [rect]
   /// set to the appropriate values for direct children of the root node.
@@ -131,7 +131,7 @@ class TestSemantics {
        assert(hint != null),
        transform = _applyRootChildScale(transform),
        assert(children != null),
-       tags = tags?.toSet() ?? Set<SemanticsTag>();
+       tags = tags?.toSet() ?? <SemanticsTag>{};
 
   /// The unique identifier for this node.
   ///
@@ -199,11 +199,11 @@ class TestSemantics {
   ///
   /// See also [new TestSemantics.root], which uses this value to describe the
   /// root node.
-  static final Rect rootRect = Rect.fromLTWH(0.0, 0.0, 2400.0, 1800.0);
+  static const Rect rootRect = Rect.fromLTWH(0.0, 0.0, 2400.0, 1800.0);
 
   /// The test screen's size in logical pixels, useful for the [rect] of
   /// full-screen widgets other than the root node.
-  static final Rect fullScreen = Rect.fromLTWH(0.0, 0.0, 800.0, 600.0);
+  static const Rect fullScreen = Rect.fromLTWH(0.0, 0.0, 800.0, 600.0);
 
   /// The transform from this node's coordinate system to its parent's coordinate system.
   ///
@@ -335,7 +335,9 @@ class TestSemantics {
         result = false;
         return false;
       }
-      return true;
+    }
+    if (it.moveNext()) {
+      return false;
     }
     return result;
   }
@@ -603,7 +605,6 @@ class SemanticsTester {
       buf.writeln('  hint: \'${node.hint}\',');
     if (node.textDirection != null)
       buf.writeln('  textDirection: ${node.textDirection},');
-
     if (node.hasChildren) {
       buf.writeln('  children: <TestSemantics>[');
       for (final SemanticsNode child in node.debugListChildrenInOrder(childOrder)) {
@@ -621,17 +622,16 @@ class SemanticsTester {
 
 class _HasSemantics extends Matcher {
   const _HasSemantics(
-    this._semantics,
-    {
-      @required this.ignoreRect,
-      @required this.ignoreTransform,
-      @required this.ignoreId,
-      @required this.childOrder,
-    }) : assert(_semantics != null),
-         assert(ignoreRect != null),
-         assert(ignoreId != null),
-         assert(ignoreTransform != null),
-         assert(childOrder != null);
+    this._semantics, {
+    @required this.ignoreRect,
+    @required this.ignoreTransform,
+    @required this.ignoreId,
+    @required this.childOrder,
+  }) : assert(_semantics != null),
+       assert(ignoreRect != null),
+       assert(ignoreId != null),
+       assert(ignoreTransform != null),
+       assert(childOrder != null);
 
   final TestSemantics _semantics;
   final bool ignoreRect;

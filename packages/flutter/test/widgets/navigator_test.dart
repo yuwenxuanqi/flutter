@@ -8,6 +8,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 
+import 'observer_tester.dart';
 import 'semantics_tester.dart';
 
 class FirstWidget extends StatelessWidget {
@@ -87,48 +88,6 @@ class OnTapPage extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-typedef OnObservation = void Function(Route<dynamic> route, Route<dynamic> previousRoute);
-
-class TestObserver extends NavigatorObserver {
-  OnObservation onPushed;
-  OnObservation onPopped;
-  OnObservation onRemoved;
-  OnObservation onReplaced;
-  OnObservation onStartUserGesture;
-
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic> previousRoute) {
-    if (onPushed != null) {
-      onPushed(route, previousRoute);
-    }
-  }
-
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic> previousRoute) {
-    if (onPopped != null) {
-      onPopped(route, previousRoute);
-    }
-  }
-
-  @override
-  void didRemove(Route<dynamic> route, Route<dynamic> previousRoute) {
-    if (onRemoved != null)
-      onRemoved(route, previousRoute);
-  }
-
-  @override
-  void didReplace({ Route<dynamic> oldRoute, Route<dynamic> newRoute }) {
-    if (onReplaced != null)
-      onReplaced(newRoute, oldRoute);
-  }
-
-  @override
-  void didStartUserGesture(Route<dynamic> route, Route<dynamic> previousRoute) {
-    if (onStartUserGesture != null)
-      onStartUserGesture(route, previousRoute);
   }
 }
 
@@ -360,8 +319,7 @@ void main() {
     expect(find.text('B'), findsOneWidget);
   });
 
-  testWidgets('Push and pop should trigger the observers',
-      (WidgetTester tester) async {
+  testWidgets('Push and pop should trigger the observers', (WidgetTester tester) async {
     final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
        '/': (BuildContext context) => OnTapPage(id: '/', onTap: () { Navigator.pushNamed(context, '/A'); }),
       '/A': (BuildContext context) => OnTapPage(id: 'A', onTap: () { Navigator.pop(context); }),
@@ -723,8 +681,7 @@ void main() {
     expect(log, <String>['pushed / (previous is <none>)', 'pushed B (previous is /)', 'pushed C (previous is B)', 'replaced B with D']);
   });
 
-  testWidgets('didStartUserGesture observable',
-      (WidgetTester tester) async {
+  testWidgets('didStartUserGesture observable', (WidgetTester tester) async {
     final Map<String, WidgetBuilder> routes = <String, WidgetBuilder>{
        '/': (BuildContext context) => OnTapPage(id: '/', onTap: () { Navigator.pushNamed(context, '/A'); }),
       '/A': (BuildContext context) => OnTapPage(id: 'A', onTap: () { Navigator.pop(context); }),

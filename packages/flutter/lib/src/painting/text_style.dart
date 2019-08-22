@@ -2,11 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'dart:ui' as ui show ParagraphStyle, TextStyle, StrutStyle, lerpDouble, Shadow;
+import 'dart:ui' as ui show ParagraphStyle, TextStyle, StrutStyle, lerpDouble, Shadow, FontFeature;
 
 import 'package:flutter/foundation.dart';
 
 import 'basic_types.dart';
+import 'colors.dart';
 import 'strut_style.dart';
 
 const String _kDefaultDebugLabel = 'unknown';
@@ -29,6 +30,8 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 /// override. The style is mixed with the ambient [DefaultTextStyle] by the
 /// [Text] widget.
 ///
+/// ![An example using TextStyle to create bold text](https://flutter.github.io/assets-for-api-docs/assets/painting/text_style_bold.png)
+///
 /// ```dart
 /// Text(
 ///   'No, we need bold strokes. We need this plan.',
@@ -42,6 +45,8 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 /// {@tool sample}
 /// As in the previous example, the [Text] widget is given a specific style
 /// override which is implicitly mixed with the ambient [DefaultTextStyle].
+///
+/// ![An example using TextStyle to create italic text](https://flutter.github.io/assets-for-api-docs/assets/painting/text_style_italics.png)
 ///
 /// ```dart
 /// Text(
@@ -66,6 +71,8 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 /// If [backgroundColor] is specified, [background] must be null and vice versa.
 /// The [backgroundColor] is treated as a shorthand for
 /// `background: Paint()..color = backgroundColor`.
+///
+/// ![An example using TextStyle to change the text opacity and color](https://flutter.github.io/assets-for-api-docs/assets/painting/text_style_opacity_and_color.png)
 ///
 /// ```dart
 /// RichText(
@@ -95,6 +102,8 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 /// In this example, the ambient [DefaultTextStyle] is explicitly manipulated to
 /// obtain a [TextStyle] that doubles the default font size.
 ///
+/// ![An example using TextStyle to change the text size](https://flutter.github.io/assets-for-api-docs/assets/painting/text_style_size.png)
+///
 /// ```dart
 /// Text(
 ///   'These are wise words, enterprising men quote \'em.',
@@ -105,17 +114,35 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 ///
 /// ### Line height
 ///
+/// By default, text will layout with line height as defined by the font.
+/// Font-metrics defined line height may be taller or shorter than the font size.
+/// The [height] property allows manual adjustment of the height of the line as
+/// a multiple of [fontSize]. For most fonts, setting [height] to 1.0 is not
+/// the same as omitting or setting height to null. The following diagram
+/// illustrates the difference between the font-metrics defined line height and
+/// the line height produced with `height: 1.0` (also known as the EM-square):
+///
+/// ![Text height diagram](https://flutter.github.io/assets-for-api-docs/assets/painting/text_height_diagram.png)
+///
 /// {@tool sample}
 /// The [height] property can be used to change the line height. Here, the line
 /// height is set to 5 times the font size, so that the text is very spaced out.
+/// Since the `fontSize` is set to 10, the final height of the line is
+/// 50 pixels.
 ///
 /// ```dart
 /// Text(
-///   'Don\'t act surprised, you guys, cuz I wrote \'em!',
-///   style: TextStyle(height: 5.0),
+///   'Ladies and gentlemen, you coulda been anywhere in the world tonight, but you’re here with us in New York City.',
+///   style: TextStyle(height: 5, fontSize: 10),
 /// )
 /// ```
 /// {@end-tool}
+///
+/// Examples of the resulting heights from different values of `TextStyle.height`:
+///
+/// ![Text height comparison diagram](https://flutter.github.io/assets-for-api-docs/assets/painting/text_height_comparison_diagram.png)
+///
+/// See [StrutStyle] for further control of line height at the paragraph level.
 ///
 /// ### Wavy red underline with black text
 ///
@@ -125,6 +152,8 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 /// remainder is styled according to the Flutter default text styles, not the
 /// ambient [DefaultTextStyle], since no explicit style is given and [RichText]
 /// does not automatically use the ambient [DefaultTextStyle].)
+///
+/// ![An example using TextStyle to highlight a word with a red wavy underline](https://flutter.github.io/assets-for-api-docs/assets/painting/text_style_wavy_red_underline.png)
 ///
 /// ```dart
 /// RichText(
@@ -144,6 +173,70 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 ///         text: ' we got it made in the shade',
 ///       ),
 ///     ],
+///   ),
+/// )
+/// ```
+/// {@end-tool}
+///
+/// ### Borders and stroke (Foreground)
+///
+/// {@tool sample}
+/// To create bordered text, a [Paint] with [Paint.style] set to [PaintingStyle.stroke]
+/// should be provided as a [foreground] paint. The following example uses a [Stack]
+/// to produce a stroke and fill effect.
+///
+/// ![Text border](https://flutter.github.io/assets-for-api-docs/assets/widgets/text_border.png)
+///
+/// ```dart
+/// Stack(
+///   children: <Widget>[
+///     // Stroked text as border.
+///     Text(
+///       'Greetings, planet!',
+///       style: TextStyle(
+///         fontSize: 40,
+///         foreground: Paint()
+///           ..style = PaintingStyle.stroke
+///           ..strokeWidth = 6
+///           ..color = Colors.blue[700],
+///       ),
+///     ),
+///     // Solid text as fill.
+///     Text(
+///       'Greetings, planet!',
+///       style: TextStyle(
+///         fontSize: 40,
+///         color: Colors.grey[300],
+///       ),
+///     ),
+///   ],
+/// )
+/// ```
+/// {@end-tool}
+///
+/// ### Gradients (Foreground)
+///
+/// {@tool sample}
+/// The [foreground] property also allows effects such as gradients to be
+/// applied to the text. Here we provide a [Paint] with a [ui.Gradient]
+/// shader.
+///
+/// ![Text gradient](https://flutter.github.io/assets-for-api-docs/assets/widgets/text_gradient.png)
+///
+/// ```dart
+/// Text(
+///   'Greetings, planet!',
+///   style: TextStyle(
+///     fontSize: 40,
+///     foreground: Paint()
+///       ..shader = ui.Gradient.linear(
+///         const Offset(0, 20),
+///         const Offset(150, 20),
+///         <Color>[
+///           Colors.red,
+///           Colors.yellow,
+///         ],
+///       )
 ///   ),
 /// )
 /// ```
@@ -183,6 +276,8 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 /// argument as shown in the example below:
 ///
 /// {@tool sample}
+/// ![An example using TextStyle to change the font family](https://flutter.github.io/assets-for-api-docs/assets/painting/text_style_custom_fonts.png)
+///
 /// ```dart
 /// const TextStyle(fontFamily: 'Raleway')
 /// ```
@@ -292,6 +387,8 @@ const String _kColorBackgroundWarning = 'Cannot provide both a backgroundColor a
 ///  * [RichText], the widget for showing a paragraph of mix-style text.
 ///  * [TextSpan], the class that wraps a [TextStyle] for the purposes of
 ///    passing it to a [RichText].
+///  * [TextStyle](https://api.flutter.dev/flutter/dart-ui/TextStyle-class.html), the class in the [dart:ui] library.
+///
 @immutable
 class TextStyle extends Diagnosticable {
   /// Creates a text style.
@@ -314,9 +411,11 @@ class TextStyle extends Diagnosticable {
     this.foreground,
     this.background,
     this.shadows,
+    this.fontFeatures,
     this.decoration,
     this.decorationColor,
     this.decorationStyle,
+    this.decorationThickness,
     this.debugLabel,
     String fontFamily,
     List<String> fontFamilyFallback,
@@ -434,9 +533,26 @@ class TextStyle extends Diagnosticable {
 
   /// The height of this text span, as a multiple of the font size.
   ///
-  /// If applied to the root [TextSpan], this value sets the line height, which
-  /// is the minimum distance between subsequent text baselines, as multiple of
-  /// the font size.
+  /// When [height] is null or omitted, the line height will be determined
+  /// by the font's metrics directly, which may differ from the fontSize.
+  /// When [height] is non-null, the line height of the span of text will be a
+  /// multiple of [fontSize] and be exactly `fontSize * height` logical pixels
+  /// tall.
+  ///
+  /// For most fonts, setting [height] to 1.0 is not the same as omitting or
+  /// setting height to null because the [fontSize] sets the height of the EM-square,
+  /// which is different than the font provided metrics for line height. The
+  /// following diagram illustrates the difference between the font-metrics
+  /// defined line height and the line height produced with `height: 1.0`
+  /// (which forms the upper and lower edges of the EM-square):
+  ///
+  /// ![Text height diagram](https://flutter.github.io/assets-for-api-docs/assets/painting/text_height_diagram.png)
+  ///
+  /// Examples of the resulting line heights from different values of `TextStyle.height`:
+  ///
+  /// ![Text height comparison diagram](https://flutter.github.io/assets-for-api-docs/assets/painting/text_height_comparison_diagram.png)
+  ///
+  /// See [StrutStyle] for further control of line height at the paragraph level.
   final double height;
 
   /// The locale used to select region-specific glyphs.
@@ -482,6 +598,8 @@ class TextStyle extends Diagnosticable {
   final Paint background;
 
   /// The decorations to paint near the text (e.g., an underline).
+  ///
+  /// Multiple decorations can be applied using [TextDecoration.combine].
   final TextDecoration decoration;
 
   /// The color in which to paint the text decorations.
@@ -489,6 +607,51 @@ class TextStyle extends Diagnosticable {
 
   /// The style in which to paint the text decorations (e.g., dashed).
   final TextDecorationStyle decorationStyle;
+
+  /// The thickness of the decoration stroke as a muliplier of the thickness
+  /// defined by the font.
+  ///
+  /// The font provides a base stroke width for [decoration]s which scales off
+  /// of the [fontSize]. This property may be used to achieve a thinner or
+  /// thicker decoration stroke, without changing the [fontSize]. For example,
+  /// a [decorationThickness] of 2.0 will draw a decoration twice as thick as
+  /// the font defined decoration thickness.
+  ///
+  /// {@tool sample}
+  /// To achieve a bolded strike-through, we can apply a thicker stroke for the
+  /// decoration.
+  ///
+  /// ```dart
+  /// Text(
+  ///   'This has a very BOLD strike through!',
+  ///   style: TextStyle(
+  ///     decoration: TextDecoration.lineThrough,
+  ///     decorationThickness: 2.85,
+  ///   ),
+  /// )
+  /// ```
+  /// {@end-tool}
+  ///
+  /// {@tool sample}
+  /// We can apply a very thin and subtle wavy underline (perhaps, when words
+  /// are misspelled) by using a [decorationThickness] < 1.0.
+  ///
+  /// ```dart
+  /// Text(
+  ///   'oopsIforgottousespaces!',
+  ///   style: TextStyle(
+  ///     decoration: TextDecoration.underline,
+  ///     decorationStyle: TextDecorationStyle.wavy,
+  ///     decorationColor: Colors.red,
+  ///     decorationThickness: 0.5,
+  ///   ),
+  /// )
+  /// ```
+  /// {@end-tool}
+  ///
+  /// The default [decorationThickness] is 1.0, which will use the font's base
+  /// stroke thickness/width.
+  final double decorationThickness;
 
   /// A human-readable description of this text style.
   ///
@@ -512,6 +675,15 @@ class TextStyle extends Diagnosticable {
   /// equivalent as order produces differing transparency.
   final List<ui.Shadow> shadows;
 
+  /// A list of [FontFeature]s that affect how the font selects glyphs.
+  ///
+  /// Some fonts support multiple variants of how a given character can be
+  /// rendered.  For example, a font might provide both proportional and
+  /// tabular numbers, or it might offer versions of the zero digit with
+  /// and without slashes.  [FontFeature]s can be used to select which of
+  /// these variants will be used for rendering.
+  final List<ui.FontFeature> fontFeatures;
+
   /// Creates a copy of this text style but with the given fields replaced with
   /// the new values.
   ///
@@ -522,6 +694,7 @@ class TextStyle extends Diagnosticable {
   /// [background] specified it will be given preference over any
   /// backgroundColor parameter.
   TextStyle copyWith({
+    bool inherit,
     Color color,
     Color backgroundColor,
     String fontFamily,
@@ -537,9 +710,11 @@ class TextStyle extends Diagnosticable {
     Paint foreground,
     Paint background,
     List<ui.Shadow> shadows,
+    List<ui.FontFeature> fontFeatures,
     TextDecoration decoration,
     Color decorationColor,
     TextDecorationStyle decorationStyle,
+    double decorationThickness,
     String debugLabel,
   }) {
     assert(color == null || foreground == null, _kColorForegroundWarning);
@@ -551,7 +726,7 @@ class TextStyle extends Diagnosticable {
       return true;
     }());
     return TextStyle(
-      inherit: inherit,
+      inherit: inherit ?? this.inherit,
       color: this.foreground == null && foreground == null ? color ?? this.color : null,
       backgroundColor: this.background == null && background == null ? backgroundColor ?? this.backgroundColor : null,
       fontFamily: fontFamily ?? this.fontFamily,
@@ -567,9 +742,11 @@ class TextStyle extends Diagnosticable {
       foreground: foreground ?? this.foreground,
       background: background ?? this.background,
       shadows: shadows ?? this.shadows,
+      fontFeatures: fontFeatures ?? this.fontFeatures,
       decoration: decoration ?? this.decoration,
       decorationColor: decorationColor ?? this.decorationColor,
       decorationStyle: decorationStyle ?? this.decorationStyle,
+      decorationThickness: decorationThickness ?? this.decorationThickness,
       debugLabel: newDebugLabel,
     );
   }
@@ -609,6 +786,8 @@ class TextStyle extends Diagnosticable {
     TextDecoration decoration,
     Color decorationColor,
     TextDecorationStyle decorationStyle,
+    double decorationThicknessFactor = 1.0,
+    double decorationThicknessDelta = 0.0,
     String fontFamily,
     List<String> fontFamilyFallback,
     double fontSizeFactor = 1.0,
@@ -635,6 +814,9 @@ class TextStyle extends Diagnosticable {
     assert(heightFactor != null);
     assert(heightDelta != null);
     assert(heightFactor != null || (heightFactor == 1.0 && heightDelta == 0.0));
+    assert(decorationThicknessFactor != null);
+    assert(decorationThicknessDelta != null);
+    assert(decorationThickness != null || (decorationThicknessFactor == 1.0 && decorationThicknessDelta == 0.0));
 
     String modifiedDebugLabel;
     assert(() {
@@ -660,9 +842,11 @@ class TextStyle extends Diagnosticable {
       foreground: foreground,
       background: background,
       shadows: shadows,
+      fontFeatures: fontFeatures,
       decoration: decoration ?? this.decoration,
       decorationColor: decorationColor ?? this.decorationColor,
       decorationStyle: decorationStyle ?? this.decorationStyle,
+      decorationThickness: decorationThickness == null ? null : decorationThickness * decorationThicknessFactor + decorationThicknessDelta,
       debugLabel: modifiedDebugLabel,
     );
   }
@@ -717,9 +901,11 @@ class TextStyle extends Diagnosticable {
       foreground: other.foreground,
       background: other.background,
       shadows: other.shadows,
+      fontFeatures: other.fontFeatures,
       decoration: other.decoration,
       decorationColor: other.decorationColor,
       decorationStyle: other.decorationStyle,
+      decorationThickness: other.decorationThickness,
       debugLabel: mergedDebugLabel,
     );
   }
@@ -769,8 +955,10 @@ class TextStyle extends Diagnosticable {
         background: t < 0.5 ? null : b.background,
         decoration: t < 0.5 ? null : b.decoration,
         shadows: t < 0.5 ? null : b.shadows,
+        fontFeatures: t < 0.5 ? null : b.fontFeatures,
         decorationColor: Color.lerp(null, b.decorationColor, t),
         decorationStyle: t < 0.5 ? null : b.decorationStyle,
+        decorationThickness: t < 0.5 ? null : b.decorationThickness,
         debugLabel: lerpDebugLabel,
       );
     }
@@ -793,9 +981,11 @@ class TextStyle extends Diagnosticable {
         foreground: t < 0.5 ? a.foreground : null,
         background: t < 0.5 ? a.background : null,
         shadows: t < 0.5 ? a.shadows : null,
+        fontFeatures: t < 0.5 ? a.fontFeatures : null,
         decoration: t < 0.5 ? a.decoration : null,
         decorationColor: Color.lerp(a.decorationColor, null, t),
         decorationStyle: t < 0.5 ? a.decorationStyle : null,
+        decorationThickness: t < 0.5 ? a.decorationThickness : null,
         debugLabel: lerpDebugLabel,
       );
     }
@@ -825,9 +1015,11 @@ class TextStyle extends Diagnosticable {
           : b.background ?? (Paint()..color = b.backgroundColor)
         : null,
       shadows: t < 0.5 ? a.shadows : b.shadows,
+      fontFeatures: t < 0.5 ? a.fontFeatures : b.fontFeatures,
       decoration: t < 0.5 ? a.decoration : b.decoration,
       decorationColor: Color.lerp(a.decorationColor, b.decorationColor, t),
       decorationStyle: t < 0.5 ? a.decorationStyle : b.decorationStyle,
+      decorationThickness: ui.lerpDouble(a.decorationThickness ?? b.decorationThickness, b.decorationThickness ?? a.decorationThickness, t),
       debugLabel: lerpDebugLabel,
     );
   }
@@ -839,6 +1031,7 @@ class TextStyle extends Diagnosticable {
       decoration: decoration,
       decorationColor: decorationColor,
       decorationStyle: decorationStyle,
+      decorationThickness: decorationThickness,
       fontWeight: fontWeight,
       fontStyle: fontStyle,
       textBaseline: textBaseline,
@@ -855,6 +1048,7 @@ class TextStyle extends Diagnosticable {
         : null
       ),
       shadows: shadows,
+      fontFeatures: fontFeatures,
     );
   }
 
@@ -895,7 +1089,7 @@ class TextStyle extends Diagnosticable {
       strutStyle: strutStyle == null ? null : ui.StrutStyle(
         fontFamily: strutStyle.fontFamily,
         fontFamilyFallback: strutStyle.fontFamilyFallback,
-        fontSize: strutStyle.fontSize,
+        fontSize: strutStyle.fontSize == null ? null : strutStyle.fontSize * textScaleFactor,
         height: strutStyle.height,
         leading: strutStyle.leading,
         fontWeight: strutStyle.fontWeight,
@@ -930,13 +1124,15 @@ class TextStyle extends Diagnosticable {
         foreground != other.foreground ||
         background != other.background ||
         !listEquals(shadows, other.shadows) ||
+        !listEquals(fontFeatures, other.fontFeatures) ||
         !listEquals(fontFamilyFallback, other.fontFamilyFallback))
       return RenderComparison.layout;
     if (color != other.color ||
         backgroundColor != other.backgroundColor ||
         decoration != other.decoration ||
         decorationColor != other.decorationColor ||
-        decorationStyle != other.decorationStyle)
+        decorationStyle != other.decorationStyle ||
+        decorationThickness != other.decorationThickness)
       return RenderComparison.paint;
     return RenderComparison.identical;
   }
@@ -965,7 +1161,9 @@ class TextStyle extends Diagnosticable {
            decoration == typedOther.decoration &&
            decorationColor == typedOther.decorationColor &&
            decorationStyle == typedOther.decorationStyle &&
+           decorationThickness == typedOther.decorationThickness &&
            listEquals(shadows, typedOther.shadows) &&
+           listEquals(fontFeatures, typedOther.fontFeatures) &&
            listEquals(fontFamilyFallback, typedOther.fontFamilyFallback);
   }
 
@@ -991,6 +1189,7 @@ class TextStyle extends Diagnosticable {
       decorationColor,
       decorationStyle,
       shadows,
+      fontFeatures,
     );
   }
 
@@ -1004,8 +1203,8 @@ class TextStyle extends Diagnosticable {
     if (debugLabel != null)
       properties.add(MessageProperty('${prefix}debugLabel', debugLabel));
     final List<DiagnosticsNode> styles = <DiagnosticsNode>[];
-    styles.add(DiagnosticsProperty<Color>('${prefix}color', color, defaultValue: null));
-    styles.add(DiagnosticsProperty<Color>('${prefix}backgroundColor', backgroundColor, defaultValue: null));
+    styles.add(ColorProperty('${prefix}color', color, defaultValue: null));
+    styles.add(ColorProperty('${prefix}backgroundColor', backgroundColor, defaultValue: null));
     styles.add(StringProperty('${prefix}family', fontFamily, defaultValue: null, quoted: false));
     styles.add(IterableProperty<String>('${prefix}familyFallback', fontFamilyFallback, defaultValue: null));
     styles.add(DoubleProperty('${prefix}size', fontSize, defaultValue: null));
@@ -1030,14 +1229,14 @@ class TextStyle extends Diagnosticable {
     styles.add(DiagnosticsProperty<Locale>('${prefix}locale', locale, defaultValue: null));
     styles.add(DiagnosticsProperty<Paint>('${prefix}foreground', foreground, defaultValue: null));
     styles.add(DiagnosticsProperty<Paint>('${prefix}background', background, defaultValue: null));
-    if (decoration != null || decorationColor != null || decorationStyle != null) {
+    if (decoration != null || decorationColor != null || decorationStyle != null || decorationThickness != null) {
       final List<String> decorationDescription = <String>[];
       if (decorationStyle != null)
         decorationDescription.add(describeEnum(decorationStyle));
 
       // Hide decorationColor from the default text view as it is shown in the
       // terse decoration summary as well.
-      styles.add(DiagnosticsProperty<Color>('${prefix}decorationColor', decorationColor, defaultValue: null, level: DiagnosticLevel.fine));
+      styles.add(ColorProperty('${prefix}decorationColor', decorationColor, defaultValue: null, level: DiagnosticLevel.fine));
 
       if (decorationColor != null)
         decorationDescription.add('$decorationColor');
@@ -1050,6 +1249,7 @@ class TextStyle extends Diagnosticable {
         decorationDescription.add('$decoration');
       assert(decorationDescription.isNotEmpty);
       styles.add(MessageProperty('${prefix}decoration', decorationDescription.join(' ')));
+      styles.add(DoubleProperty('${prefix}decorationThickness', decorationThickness, unit: 'x', defaultValue: null));
     }
 
     final bool styleSpecified = styles.any((DiagnosticsNode n) => !n.isFiltered(DiagnosticLevel.info));

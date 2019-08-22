@@ -6,8 +6,8 @@ import 'dart:async';
 import 'dart:convert' show json;
 import 'dart:developer' as developer;
 import 'dart:io' show exit;
-// Before adding any more dart:ui imports, pleaes read the README.
 import 'dart:ui' as ui show saveCompilationTrace, Window, window;
+// Before adding any more dart:ui imports, please read the README.
 
 import 'package:meta/meta.dart';
 
@@ -132,7 +132,7 @@ abstract class BindingBase {
       return true;
     }());
 
-    if (!kReleaseMode) {
+    if (!kReleaseMode && !kIsWeb) {
       registerSignalServiceExtension(
         name: 'exit',
         callback: _exitApplication,
@@ -140,7 +140,7 @@ abstract class BindingBase {
       registerServiceExtension(
         name: 'saveCompilationTrace',
         callback: (Map<String, String> parameters) async {
-          return <String, dynamic> {
+          return <String, dynamic>{
             'value': ui.saveCompilationTrace(),
           };
         },
@@ -323,7 +323,7 @@ abstract class BindingBase {
           await setter(parameters['enabled'] == 'true');
           _postExtensionStateChangedEvent(name, await getter() ? 'true' : 'false');
         }
-        return <String, dynamic>{ 'enabled': await getter() ? 'true' : 'false' };
+        return <String, dynamic>{'enabled': await getter() ? 'true' : 'false'};
       },
     );
   }
@@ -357,7 +357,7 @@ abstract class BindingBase {
           await setter(double.parse(parameters[name]));
           _postExtensionStateChangedEvent(name, (await getter()).toString());
         }
-        return <String, dynamic>{ name: (await getter()).toString() };
+        return <String, dynamic>{name: (await getter()).toString()};
       },
     );
   }
@@ -419,7 +419,7 @@ abstract class BindingBase {
           await setter(parameters['value']);
           _postExtensionStateChangedEvent(name, await getter());
         }
-        return <String, dynamic>{ 'value': await getter() };
+        return <String, dynamic>{'value': await getter()};
       },
     );
   }
@@ -522,7 +522,7 @@ abstract class BindingBase {
         FlutterError.reportError(FlutterErrorDetails(
           exception: caughtException,
           stack: caughtStack,
-          context: 'during a service extension callback for "$method"',
+          context: ErrorDescription('during a service extension callback for "$method"'),
         ));
         return developer.ServiceExtensionResponse.error(
           developer.ServiceExtensionResponse.extensionError,

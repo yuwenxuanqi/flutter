@@ -90,9 +90,7 @@ void main() {
     expect(box.size, const Size(80.0, 80.0));
   });
 
-  testWidgets(
-    'test default icon buttons can be stretched if specified',
-    (WidgetTester tester) async {
+  testWidgets('test default icon buttons can be stretched if specified', (WidgetTester tester) async {
     await tester.pumpWidget(
       Directionality(
         textDirection: TextDirection.ltr,
@@ -290,7 +288,7 @@ void main() {
     expect(semantics, hasSemantics(TestSemantics.root(
       children: <TestSemantics>[
         TestSemantics.rootChild(
-          rect: Rect.fromLTRB(0.0, 0.0, 48.0, 48.0),
+          rect: const Rect.fromLTRB(0.0, 0.0, 48.0, 48.0),
           actions: <SemanticsAction>[
             SemanticsAction.tap,
           ],
@@ -322,7 +320,7 @@ void main() {
     expect(semantics, hasSemantics(TestSemantics.root(
         children: <TestSemantics>[
           TestSemantics.rootChild(
-            rect: Rect.fromLTRB(0.0, 0.0, 48.0, 48.0),
+            rect: const Rect.fromLTRB(0.0, 0.0, 48.0, 48.0),
             flags: <SemanticsFlag>[
               SemanticsFlag.hasEnabledState,
               SemanticsFlag.isButton,

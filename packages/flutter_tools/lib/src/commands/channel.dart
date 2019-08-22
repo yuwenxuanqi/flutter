@@ -32,12 +32,15 @@ class ChannelCommand extends FlutterCommand {
   String get invocation => '${runner.executableName} $name [<channel-name>]';
 
   @override
+  Future<Set<DevelopmentArtifact>> get requiredArtifacts async => const <DevelopmentArtifact>{};
+
+  @override
   Future<FlutterCommandResult> runCommand() async {
     switch (argResults.rest.length) {
       case 0:
         await _listChannels(
           showAll: argResults['all'],
-          verbose: globalResults['verbose']
+          verbose: globalResults['verbose'],
         );
         return null;
       case 1:
@@ -52,7 +55,7 @@ class ChannelCommand extends FlutterCommand {
     // Beware: currentBranch could contain PII. See getBranchName().
     final String currentChannel = FlutterVersion.instance.channel;
     final String currentBranch = FlutterVersion.instance.getBranchName();
-    final Set<String> seenChannels = Set<String>();
+    final Set<String> seenChannels = <String>{};
     final List<String> rawOutput = <String>[];
 
     showAll = showAll || currentChannel != currentBranch;

@@ -203,8 +203,8 @@ void main() {
   testWidgets('Can specify colors', (WidgetTester tester) async {
     await tester.pumpWidget(boilerplate(child: CupertinoButton(
       child: const Text('Skeuomorph me'),
-      color: const Color(0x0000FF),
-      disabledColor: const Color(0x00FF00),
+      color: const Color(0x000000FF),
+      disabledColor: const Color(0x0000FF00),
       onPressed: () { },
     )));
 
@@ -212,12 +212,12 @@ void main() {
         find.widgetWithText(DecoratedBox, 'Skeuomorph me')
       ).decoration;
 
-    expect(boxDecoration.color, const Color(0x0000FF));
+    expect(boxDecoration.color, const Color(0x000000FF));
 
     await tester.pumpWidget(boilerplate(child: const CupertinoButton(
       child: Text('Skeuomorph me'),
-      color: Color(0x0000FF),
-      disabledColor: Color(0x00FF00),
+      color: Color(0x000000FF),
+      disabledColor: Color(0x0000FF00),
       onPressed: null,
     )));
 
@@ -225,16 +225,16 @@ void main() {
         find.widgetWithText(DecoratedBox, 'Skeuomorph me')
       ).decoration;
 
-    expect(boxDecoration.color, const Color(0x00FF00));
+    expect(boxDecoration.color, const Color(0x0000FF00));
   });
 
-  testWidgets('Botton respects themes', (WidgetTester tester) async {
+  testWidgets('Button respects themes', (WidgetTester tester) async {
     TextStyle textStyle;
 
     await tester.pumpWidget(
       CupertinoApp(
         home: CupertinoButton(
-          onPressed: () {},
+          onPressed: () { },
           child: Builder(builder: (BuildContext context) {
             textStyle = DefaultTextStyle.of(context).style;
             return const Placeholder();
@@ -248,7 +248,7 @@ void main() {
     await tester.pumpWidget(
       CupertinoApp(
         home: CupertinoButton.filled(
-          onPressed: () {},
+          onPressed: () { },
           child: Builder(builder: (BuildContext context) {
             textStyle = DefaultTextStyle.of(context).style;
             return const Placeholder();
@@ -270,7 +270,7 @@ void main() {
       CupertinoApp(
         theme: const CupertinoThemeData(brightness: Brightness.dark),
         home: CupertinoButton(
-          onPressed: () {},
+          onPressed: () { },
           child: Builder(builder: (BuildContext context) {
             textStyle = DefaultTextStyle.of(context).style;
             return const Placeholder();
@@ -284,7 +284,7 @@ void main() {
       CupertinoApp(
         theme: const CupertinoThemeData(brightness: Brightness.dark),
         home: CupertinoButton.filled(
-          onPressed: () {},
+          onPressed: () { },
           child: Builder(builder: (BuildContext context) {
             textStyle = DefaultTextStyle.of(context).style;
             return const Placeholder();

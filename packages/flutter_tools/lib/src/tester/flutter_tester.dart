@@ -13,11 +13,12 @@ import '../base/file_system.dart';
 import '../base/io.dart';
 import '../base/process_manager.dart';
 import '../build_info.dart';
-import '../bundle.dart' as bundle;
+import '../bundle.dart';
 import '../convert.dart';
 import '../dart/package_map.dart';
 import '../device.dart';
 import '../globals.dart';
+import '../project.dart';
 import '../protocol_discovery.dart';
 import '../version.dart';
 
@@ -41,13 +42,21 @@ class FlutterTesterApp extends ApplicationPackage {
 
 // TODO(scheglov): This device does not currently work with full restarts.
 class FlutterTesterDevice extends Device {
-  FlutterTesterDevice(String deviceId) : super(deviceId);
+  FlutterTesterDevice(String deviceId) : super(
+      deviceId,
+      platformType: null,
+      category: null,
+      ephemeral: false,
+  );
 
   Process _process;
   final DevicePortForwarder _portForwarder = _NoopPortForwarder();
 
   @override
   Future<bool> get isLocalEmulator async => false;
+
+  @override
+  Future<String> get emulatorId async => null;
 
   @override
   String get name => 'Flutter test device';
@@ -65,7 +74,7 @@ class FlutterTesterDevice extends Device {
   Future<TargetPlatform> get targetPlatform async => TargetPlatform.tester;
 
   @override
-  void clearLogs() {}
+  void clearLogs() { }
 
   final _FlutterTesterDeviceLogReader _logReader =
       _FlutterTesterDeviceLogReader();
@@ -96,7 +105,6 @@ class FlutterTesterDevice extends Device {
     @required DebuggingOptions debuggingOptions,
     Map<String, dynamic> platformArgs,
     bool prebuiltApplication = false,
-    bool applicationNeedsRebuild = false,
     bool usesTerminalUi = true,
     bool ipv6 = false,
   }) async {
@@ -121,17 +129,19 @@ class FlutterTesterDevice extends Device {
     if (debuggingOptions.debuggingEnabled) {
       if (debuggingOptions.startPaused)
         command.add('--start-paused');
+      if (debuggingOptions.disableServiceAuthCodes)
+        command.add('--disable-service-auth-codes');
       if (debuggingOptions.hasObservatoryPort)
         command.add('--observatory-port=${debuggingOptions.observatoryPort}');
     }
 
     // Build assets and perform initial compilation.
     final String assetDirPath = getAssetBuildDirectory();
-    final String applicationKernelFilePath = bundle.getKernelPathForTransformerOptions(
+    final String applicationKernelFilePath = getKernelPathForTransformerOptions(
       fs.path.join(getBuildDirectory(), 'flutter-tester-app.dill'),
       trackWidgetCreation: buildInfo.trackWidgetCreation,
     );
-    await bundle.build(
+    await BundleBuilder().build(
       mainPath: mainPath,
       assetDirPath: assetDirPath,
       applicationKernelFilePath: applicationKernelFilePath,
@@ -154,17 +164,17 @@ class FlutterTesterDevice extends Device {
       // Setting a bool can't fail in the callback.
       unawaited(_process.exitCode.then<void>((_) => _isRunning = false));
       _process.stdout
-          .transform<String>(utf8.decoder)
-          .transform<String>(const LineSplitter())
-          .listen((String line) {
-        _logReader.addLine(line);
-      });
+        .transform<String>(utf8.decoder)
+        .transform<String>(const LineSplitter())
+        .listen((String line) {
+          _logReader.addLine(line);
+        });
       _process.stderr
-          .transform<String>(utf8.decoder)
-          .transform<String>(const LineSplitter())
-          .listen((String line) {
-        _logReader.addLine(line);
-      });
+        .transform<String>(utf8.decoder)
+        .transform<String>(const LineSplitter())
+        .listen((String line) {
+          _logReader.addLine(line);
+        });
 
       if (!debuggingOptions.debuggingEnabled)
         return LaunchResult.succeeded();
@@ -191,6 +201,9 @@ class FlutterTesterDevice extends Device {
 
   @override
   Future<bool> uninstallApp(ApplicationPackage app) async => true;
+
+  @override
+  bool isSupportedForProject(FlutterProject flutterProject) => true;
 }
 
 class FlutterTesterDevices extends PollingDeviceDiscovery {

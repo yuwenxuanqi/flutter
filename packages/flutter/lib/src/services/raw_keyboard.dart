@@ -9,6 +9,8 @@ import 'package:flutter/foundation.dart';
 import 'keyboard_key.dart';
 import 'raw_keyboard_android.dart';
 import 'raw_keyboard_fuchsia.dart';
+import 'raw_keyboard_linux.dart';
+import 'raw_keyboard_macos.dart';
 import 'system_channels.dart';
 
 /// An enum describing the side of the keyboard that a key is on, to allow
@@ -231,7 +233,7 @@ abstract class RawKeyEventData {
 ///  * [RawKeyboard], which uses this interface to expose key data.
 ///  * [RawKeyboardListener], a widget that listens for raw key events.
 @immutable
-abstract class RawKeyEvent {
+abstract class RawKeyEvent extends Diagnosticable {
   /// Initializes fields for subclasses, and provides a const constructor for
   /// const subclasses.
   const RawKeyEvent({
@@ -254,6 +256,9 @@ abstract class RawKeyEvent {
           plainCodePoint: message['plainCodePoint'] ?? 0,
           scanCode: message['scanCode'] ?? 0,
           metaState: message['metaState'] ?? 0,
+          eventSource: message['source'] ?? 0,
+          vendorId: message['vendorId'] ?? 0,
+          productId: message['productId'] ?? 0,
         );
         break;
       case 'fuchsia':
@@ -262,6 +267,22 @@ abstract class RawKeyEvent {
           codePoint: message['codePoint'] ?? 0,
           modifiers: message['modifiers'] ?? 0,
         );
+        break;
+      case 'macos':
+        data = RawKeyEventDataMacOs(
+            characters: message['characters'] ?? '',
+            charactersIgnoringModifiers:
+                message['charactersIgnoringModifiers'] ?? '',
+            keyCode: message['keyCode'] ?? 0,
+            modifiers: message['modifiers'] ?? 0);
+        break;
+      case 'linux':
+        data = RawKeyEventDataLinux(
+            keyHelper: KeyHelper(message['toolkit'] ?? ''),
+            unicodeScalarValues: message['unicodeScalarValues'] ?? 0,
+            keyCode: message['keyCode'] ?? 0,
+            scanCode: message['scanCode'] ?? 0,
+            modifiers: message['modifiers'] ?? 0);
         break;
       default:
         // We don't yet implement raw key events on iOS or other platforms, but
@@ -388,6 +409,13 @@ abstract class RawKeyEvent {
 
   /// Platform-specific information about the key event.
   final RawKeyEventData data;
+
+  @override
+  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(properties);
+    properties.add(DiagnosticsProperty<LogicalKeyboardKey>('logicalKey', logicalKey));
+    properties.add(DiagnosticsProperty<PhysicalKeyboardKey>('physicalKey', physicalKey));
+  }
 }
 
 /// The user has pressed a key on the keyboard.
@@ -400,7 +428,7 @@ class RawKeyDownEvent extends RawKeyEvent {
   const RawKeyDownEvent({
     @required RawKeyEventData data,
     String character,
-  })  : super(data: data, character: character);
+  }) : super(data: data, character: character);
 }
 
 /// The user has released a key on the keyboard.
@@ -478,7 +506,7 @@ class RawKeyboard {
     }
   }
 
-  final Set<LogicalKeyboardKey> _keysPressed = Set<LogicalKeyboardKey>();
+  final Set<LogicalKeyboardKey> _keysPressed = <LogicalKeyboardKey>{};
 
   /// Returns the set of keys currently pressed.
   Set<LogicalKeyboardKey> get keysPressed {

@@ -72,12 +72,14 @@ class _AccountDetails extends StatefulWidget {
     @required this.accountEmail,
     this.onTap,
     this.isOpen,
+    this.arrowColor,
   }) : super(key: key);
 
   final Widget accountName;
   final Widget accountEmail;
   final VoidCallback onTap;
   final bool isOpen;
+  final Color arrowColor;
 
   @override
   _AccountDetailsState createState() => _AccountDetailsState();
@@ -113,8 +115,12 @@ class _AccountDetailsState extends State<_AccountDetails> with SingleTickerProvi
   @override
   void didUpdateWidget (_AccountDetails oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (_animation.status == AnimationStatus.dismissed ||
-        _animation.status == AnimationStatus.reverse) {
+    // If the state of the arrow did not change, there is no need to trigger the animation
+    if (oldWidget.isOpen == widget.isOpen) {
+      return;
+    }
+
+    if (widget.isOpen) {
       _controller.forward();
     } else {
       _controller.reverse();
@@ -175,7 +181,7 @@ class _AccountDetailsState extends State<_AccountDetails> with SingleTickerProvi
                 angle: _animation.value * math.pi,
                 child: Icon(
                   Icons.arrow_drop_down,
-                  color: Colors.white,
+                  color: widget.arrowColor,
                   semanticLabel: widget.isOpen
                     ? localizations.hideAccountsLabel
                     : localizations.showAccountsLabel,
@@ -310,6 +316,7 @@ class UserAccountsDrawerHeader extends StatefulWidget {
     @required this.accountName,
     @required this.accountEmail,
     this.onDetailsPressed,
+    this.arrowColor = Colors.white,
   }) : super(key: key);
 
   /// The header's background. If decoration is null then a [BoxDecoration]
@@ -339,6 +346,9 @@ class UserAccountsDrawerHeader extends StatefulWidget {
   /// A callback that is called when the horizontal area which contains the
   /// [accountName] and [accountEmail] is tapped.
   final VoidCallback onDetailsPressed;
+
+  /// The [Color] of the arrow icon.
+  final Color arrowColor;
 
   @override
   _UserAccountsDrawerHeaderState createState() => _UserAccountsDrawerHeaderState();
@@ -386,6 +396,7 @@ class _UserAccountsDrawerHeaderState extends State<UserAccountsDrawerHeader> {
                 accountEmail: widget.accountEmail,
                 isOpen: _isOpen,
                 onTap: widget.onDetailsPressed == null ? null : _handleDetailsPressed,
+                arrowColor: widget.arrowColor,
               ),
             ],
           ),

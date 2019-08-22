@@ -21,7 +21,7 @@ const double _kAppBarHeight = 128.0;
 const double _kFabHalfSize = 28.0; // TODO(mpcomplete): needs to adapt to screen size
 const double _kRecipePageMaxWidth = 500.0;
 
-final Set<Recipe> _favoriteRecipes = Set<Recipe>();
+final Set<Recipe> _favoriteRecipes = <Recipe>{};
 
 final ThemeData _kTheme = ThemeData(
   brightness: Brightness.light,
@@ -205,13 +205,13 @@ class _PestoLogoState extends State<PestoLogo> {
   static const double kTextHeight = 48.0;
   final TextStyle titleStyle = const PestoStyle(fontSize: kTextHeight, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: 3.0);
   final RectTween _textRectTween = RectTween(
-    begin: Rect.fromLTWH(0.0, kLogoHeight, kLogoWidth, kTextHeight),
-    end: Rect.fromLTWH(0.0, kImageHeight, kLogoWidth, kTextHeight),
+    begin: const Rect.fromLTWH(0.0, kLogoHeight, kLogoWidth, kTextHeight),
+    end: const Rect.fromLTWH(0.0, kImageHeight, kLogoWidth, kTextHeight),
   );
   final Curve _textOpacity = const Interval(0.4, 1.0, curve: Curves.easeInOut);
   final RectTween _imageRectTween = RectTween(
-    begin: Rect.fromLTWH(0.0, 0.0, kLogoWidth, kLogoHeight),
-    end: Rect.fromLTWH(0.0, 0.0, kLogoWidth, kImageHeight),
+    begin: const Rect.fromLTWH(0.0, 0.0, kLogoWidth, kLogoHeight),
+    end: const Rect.fromLTWH(0.0, 0.0, kLogoWidth, kImageHeight),
   );
 
   @override
@@ -361,7 +361,7 @@ class _RecipePageState extends State<RecipePage> {
                 backgroundColor: Colors.transparent,
                 actions: <Widget>[
                   PopupMenuButton<String>(
-                    onSelected: (String item) {},
+                    onSelected: (String item) { },
                     itemBuilder: (BuildContext context) => <PopupMenuItem<String>>[
                       _buildMenuItem(Icons.share, 'Tweet recipe'),
                       _buildMenuItem(Icons.email, 'Email recipe'),
@@ -493,11 +493,9 @@ class RecipeSheet extends StatelessWidget {
                   ),
                 ]
               ),
-            ]..addAll(recipe.ingredients.map<TableRow>(
-              (RecipeIngredient ingredient) {
+              ...recipe.ingredients.map<TableRow>((RecipeIngredient ingredient) {
                 return _buildItemRow(ingredient.amount, ingredient.description);
-              }
-            ))..add(
+              }),
               TableRow(
                 children: <Widget>[
                   const SizedBox(),
@@ -506,12 +504,11 @@ class RecipeSheet extends StatelessWidget {
                     child: Text('Steps', style: headingStyle),
                   ),
                 ]
-              )
-            )..addAll(recipe.steps.map<TableRow>(
-              (RecipeStep step) {
+              ),
+              ...recipe.steps.map<TableRow>((RecipeStep step) {
                 return _buildItemRow(step.duration ?? '', step.description);
-              }
-            )),
+              }),
+            ],
           ),
         ),
       ),
